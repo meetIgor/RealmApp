@@ -1,10 +1,6 @@
 //
 //  StorageManager.swift
 //  RealmApp
-//
-//  Created by Alexey Efimov on 08.10.2021.
-//  Copyright © 2021 Alexey Efimov. All rights reserved.
-//
 
 import Foundation
 import RealmSwift
@@ -42,13 +38,13 @@ class StorageManager {
             taskList.name = newValue
         }
     }
-
+    
     func done(_ taskList: TaskList) {
         write {
             taskList.tasks.setValue(true, forKey: "isComplete")
         }
     }
-
+    
     // MARK: - Tasks
     func save(_ task: String, withNote note: String, to taskList: TaskList, completion: (Task) -> Void) {
         write {
@@ -73,7 +69,6 @@ class StorageManager {
     
     func done(_ task: Task) {
         write {
-            //task.setValue(true, forKey: "isComplete")
             task.isComplete.toggle()
         }
     }

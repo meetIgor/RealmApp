@@ -2,20 +2,20 @@
 //  TasksViewController.swift
 //  RealmApp
 //
-//  Created by Alexey Efimov on 02.07.2018.
-//  Copyright © 2018 Alexey Efimov. All rights reserved.
-//
 
 import UIKit
 import RealmSwift
 
 class TasksViewController: UITableViewController {
     
+    // MARk: - Public Properties
     var taskList: TaskList!
     
+    // MARK: - Private Properties
     private var currentTasks: Results<Task>!
     private var completedTasks: Results<Task>!
-
+    
+    // MARK: - Life Cycles Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         title = taskList.name
@@ -30,7 +30,16 @@ class TasksViewController: UITableViewController {
         completedTasks = taskList.tasks.filter("isComplete = true")
     }
     
-    // MARK: - Table view data source
+    // MARK: - Private Methods
+    @objc private func addButtonPressed() {
+        showAlert()
+    }
+    
+}
+
+// MARK: - Table View Data Source
+extension TasksViewController {
+    
     override func numberOfSections(in tableView: UITableView) -> Int {
         2
     }
@@ -52,18 +61,15 @@ class TasksViewController: UITableViewController {
         cell.contentConfiguration = content
         return cell
     }
-    
-    @objc private func addButtonPressed() {
-        showAlert()
-    }
-
 }
-
 
 // MARK: - Table View Delegate
 extension TasksViewController {
+    
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let task = indexPath.section == 0 ? currentTasks[indexPath.row] : completedTasks [indexPath.row]
+        let task = indexPath.section == 0
+        ? currentTasks[indexPath.row]
+        : completedTasks [indexPath.row]
         
         let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { _, _, _ in
             StorageManager.shared.delete(task: task)
@@ -81,16 +87,13 @@ extension TasksViewController {
             style: .normal,
             title: indexPath.section == 0 ? "Done" : "Undone"
         ) { [unowned self] _, _, isDone in
-            switch indexPath.section {
-            case 0:
-                StorageManager.shared.done(task)
-                let newIndexPath = IndexPath(row: completedTasks.count - 1, section: 1)
-                tableView.moveRow(at: indexPath, to: newIndexPath)
-            default:
-                StorageManager.shared.done(task)
-                let newIndexPath = IndexPath(row: currentTasks.count - 1, section: 0)
-                tableView.moveRow(at: indexPath, to: newIndexPath)
-            }
+            StorageManager.shared.done(task)
+            
+            let newIndexPath = indexPath.section == 0
+            ? IndexPath(row: completedTasks.count - 1, section: 1)
+            : IndexPath(row: currentTasks.count - 1, section: 0)
+            
+            tableView.moveRow(at: indexPath, to: newIndexPath)
             isDone(true)
         }
         
@@ -98,6 +101,10 @@ extension TasksViewController {
         doneAction.backgroundColor = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
         
         return UISwipeActionsConfiguration(actions: [doneAction, editAction, deleteAction])
+    }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
 }
@@ -111,7 +118,6 @@ extension TasksViewController {
         
         alert.action(with: task) { [weak self] taskTitle, note in
             if let task = task, let completion = completion {
-                // TODO - edit task
                 StorageManager.shared.edit(task: task, newName: taskTitle, newNote: note)
                 completion()
             } else {

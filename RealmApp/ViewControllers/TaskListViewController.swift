@@ -2,17 +2,16 @@
 //  TaskListsViewController.swift
 //  RealmApp
 //
-//  Created by Alexey Efimov on 02.07.2018.
-//  Copyright © 2018 Alexey Efimov. All rights reserved.
-//
 
 import UIKit
 import RealmSwift
 
 class TaskListViewController: UITableViewController {
-
+    
+    // MARK: -  Public Properties
     var taskLists: Results<TaskList>!
     
+    // MARK: - Life Cycles Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         let addButton = UIBarButtonItem(
@@ -32,7 +31,36 @@ class TaskListViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    // MARK: - Table view data source
+    // MARK: - Navigation
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        guard let indexPath = tableView.indexPathForSelectedRow else { return }
+        guard let tasksVC = segue.destination as? TasksViewController else { return }
+        let taskList = taskLists[indexPath.row]
+        tasksVC.taskList = taskList
+    }
+    
+    // MARK: - IB Actions
+    @IBAction func sortingList(_ sender: UISegmentedControl) {
+        let sortKey = sender.selectedSegmentIndex == 0 ? "date" : "name"
+        taskLists = taskLists.sorted(byKeyPath: sortKey, ascending: true)
+        tableView.reloadData()
+    }
+    
+    // MARK: - Private Methods
+    @objc private func addButtonPressed() {
+        showAlert()
+    }
+    
+    private func createTempData() {
+        DataManager.shared.createTempData { [unowned self] in
+            tableView.reloadData()
+        }
+    }
+}
+
+// MARK: - Table View Data Source
+extension TaskListViewController {
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         taskLists.count
     }
@@ -42,12 +70,25 @@ class TaskListViewController: UITableViewController {
         var content = cell.defaultContentConfiguration()
         let taskList = taskLists[indexPath.row]
         content.text = taskList.name
-        content.secondaryText = "\(taskList.tasks.count)"
+        
+        let currentTasks = taskList.tasks.where { $0.isComplete == false }.count
+        
+        if currentTasks == 0 && taskList.tasks.count != 0 {
+            cell.accessoryType = .checkmark
+            content.secondaryText = ""
+        } else {
+            cell.accessoryType = .none
+            content.secondaryText = "\(currentTasks)"
+        }
+        
         cell.contentConfiguration = content
         return cell
     }
+}
+
+// MARK: - Table View Delegate
+extension TaskListViewController {
     
-    // MARK: - Table View Data Source
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let taskList = taskLists[indexPath.row]
         
@@ -74,29 +115,9 @@ class TaskListViewController: UITableViewController {
         
         return UISwipeActionsConfiguration(actions: [doneAction, editAction, deleteAction])
     }
-    
-    // MARK: - Navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        guard let indexPath = tableView.indexPathForSelectedRow else { return }
-        guard let tasksVC = segue.destination as? TasksViewController else { return }
-        let taskList = taskLists[indexPath.row]
-        tasksVC.taskList = taskList
-    }
-
-    @IBAction func sortingList(_ sender: UISegmentedControl) {
-    }
-    
-    @objc private func addButtonPressed() {
-        showAlert()
-    }
-    
-    private func createTempData() {
-        DataManager.shared.createTempData { [unowned self] in
-            tableView.reloadData()
-        }
-    }
 }
 
+// MARK: - Alert Controller
 extension TaskListViewController {
     
     private func showAlert(with taskList: TaskList? = nil, completion: (() -> Void)? = nil) {
