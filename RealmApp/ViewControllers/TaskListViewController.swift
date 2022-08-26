@@ -73,7 +73,7 @@ extension TaskListViewController {
         
         let currentTasks = taskList.tasks.where { $0.isComplete == false }.count
         
-        if currentTasks == 0 && taskList.tasks.count != 0 {
+        if currentTasks == 0, taskList.tasks.count != 0 {
             cell.accessoryType = .checkmark
             content.secondaryText = ""
         } else {
