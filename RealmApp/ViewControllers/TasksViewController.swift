@@ -90,8 +90,8 @@ extension TasksViewController {
             StorageManager.shared.done(task)
             
             let newIndexPath = indexPath.section == 0
-            ? IndexPath(row: completedTasks.count - 1, section: 1)
-            : IndexPath(row: currentTasks.count - 1, section: 0)
+            ? IndexPath(row: completedTasks.index(of: task) ?? 0, section: 1)
+            : IndexPath(row: currentTasks.index(of: task) ?? 0, section: 0)
             
             tableView.moveRow(at: indexPath, to: newIndexPath)
             isDone(true)
